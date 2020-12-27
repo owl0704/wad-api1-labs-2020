@@ -39,5 +39,6 @@ export const moviesObject = {
         "video": false,
         "vote_average": 7.4
       }
+      
     ]
   }
