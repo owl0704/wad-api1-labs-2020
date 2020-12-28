@@ -7,7 +7,7 @@ import './db';
 import { loadUsers } from './seedData'
 import usersRouter from './api/users';
 import session from 'express-session';
-import authenticate from './authenticate';
+import passport from './authenticate';
 dotenv.config();
 const errHandler = (err, req, res, next) => {
     /* if the error in development then send stack trace to display whole error,
@@ -21,7 +21,7 @@ const errHandler = (err, req, res, next) => {
     res.status(500).send(`Hey!! You caught the error 👍👍, ${err.stack} `);
 };
 const app = express();
-
+app.use(passport.initialize());
 const port = process.env.PORT;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
@@ -31,7 +31,8 @@ app.use(session({
     resave: true,
     saveUninitialized: true
 }));
-app.use('/api/movies', authenticate, moviesRouter);
+
+app.use('/api/movies', passport.authenticate('jwt', { session: false }), moviesRouter);
 app.use('/api/genres', genresRouter);
 app.use('/api/users', usersRouter);
 app.use(errHandler);
