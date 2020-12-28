@@ -4,17 +4,19 @@ import moviesRouter from './api/movies';
 import bodyParser from 'body-parser';
 import genresRouter from './api/genres';
 import './db';
-import { loadUsers } from './seedData'
+import {loadUsers, loadMovies} from './seedData';
 import usersRouter from './api/users';
 import session from 'express-session';
 import passport from './authenticate';
+
 dotenv.config();
 const errHandler = (err, req, res, next) => {
     /* if the error in development then send stack trace to display whole error,
     if it's in production then just send error message  */
     if (process.env.SEED_DB) {
         loadUsers();
-    }
+        loadMovies();
+      }
     if (process.env.NODE_ENV === 'production') {
         return res.status(500).send(`Something went wrong!`);
     }
