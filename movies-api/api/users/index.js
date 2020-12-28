@@ -2,6 +2,7 @@ import express from 'express';
 import User from './userModel';
 import jwt from 'jsonwebtoken';
 import movieModel from '../movies/movieModel'
+import { use } from 'passport';
 
 
 
@@ -22,11 +23,19 @@ router.post('/', async (req, res, next) => {
     });
   }
   if (req.query.action === 'register') {
-    await User.create(req.body).catch(next);
-    res.status(201).json({
-      code: 201,
-      msg: 'Successful created new user.',
-    });
+    const passReg=/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$/;
+    if(!passReg.test(req.body.password)){
+      res.status(401).json({
+        code:401,
+        msg:'Bad password format.'
+      })
+    }else{
+      await User.create(req.body).catch(next);
+      res.status(201).json({
+        code: 201,
+        msg: 'Successful created new user.',
+      });
+    }
   } else {
     const user = await User.findByUserName(req.body.username).catch(next);
     if (!user) return res.status(401).json({ code: 401, msg: 'Authentication failed. User not found.' });
@@ -62,13 +71,24 @@ router.put('/:id', (req, res) => {
     .then(user => res.json(200, user));
 });
 router.post('/:userName/favourites', async (req, res, next) => {
-  const newFavourite = req.body.id;
-  const userName = req.params.userName;
-  const movie = await movieModel.findByMovieDBId(newFavourite);
-  const user = await User.findByUserName(userName);
-  await user.favourites.push(movie._id);
-  await user.save(); 
-  res.status(201).json(user); 
+  try{
+    const newFavourite = req.body.id;
+    const userName = req.params.userName;
+    const movie = await movieModel.findByMovieDBId(newFavourite);
+    const user = await User.findByUserName(userName);
+    if(user.favourites.indexOf(movie._id) !== -1){
+      res.status(401).json({
+        code:401,
+        msg:"Already in favourites."
+      })
+    }else{
+      await user.favourites.push(movie._id);
+      await user.save(); 
+      res.status(201).json(user); 
+    }
+  }catch(err){
+    next(err)
+  }
 });
 router.get('/:userName/favourites', (req, res, next) => {
   const userName = req.params.userName;
